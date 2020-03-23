@@ -3,45 +3,65 @@ import Clock from './Clock.js';
 
 function Board() {
     const session = {
-        sets: 4,
-        set: [
-            {title:"SQUAT PULLS", time: 35},
-            {title:"ROWS", time: 35},
-            {title:"REST", time: 25},
-            {title:"MB OH PRESS", time: 35},
-            {title:"PUSH UPS", time: 35},
-            {title:"REST", time: 25},
-            {title:"SQUATS", time: 35},
-            {title:"KB DEADLIFTS", time: 35},
-            {title:"REST", time: 25}
+        sets:[
+            {
+                repeat: 4,
+                exercises: [
+                    {title:"FLOOR PULL", time: 40},
+                    {title:"REST", time: 25},
+                    {title:"OH PRESS / BUDDHA CLAP", time: 40},
+                    {title:"REST", time: 25},
+                    {title:"SQUAT", time: 40},
+                    {title:"REST", time: 25},
+                ]
+            },
+            {
+                repeat: 2,
+                exercises: [
+                    {title:"MOUNTAIN CLIMBERS", time: 25},
+                    {title:"REST", time: 30},
+                    {title:"LUNGES", time: 25},
+                    {title:"REST", time: 30},
+                    {title:"BATWINGS / BENTOVER ROW", time: 25},
+                    {title:"REST", time: 30},
+                    {title:"MOUNTAIN CLIMBERS", time: 25},
+                    {title:"REST", time: 30},
+                ]
+            }
         ]
     }
 
     const [idx, setIdx] = useState(-1);
-    const [currentSet, setCurrentSet] = useState(0);
+    const [currentSetIdx, setCurrentSetIdx] = useState(0);
+    const [currentSetCount, setCurrentSetCount] = useState(0);
     const [currentSession] = useState(session);
     const [sessionStatus, setSessionStatus] = useState("READY");
     const [currentExercise, setCurrentExercise] = useState({title: sessionStatus, time: -2, idx: -1});
 
     useEffect(() => {
         console.log("IDX", idx);
+        const set = currentSession.sets[currentSetIdx];
         if (idx >= 0) {
-            if (idx < currentSession.set.length) {
-                if (idx === currentSession.set.length - 1 && currentSet + 1 === currentSession.sets) {
-                    endSession();
+            if (currentSetIdx < currentSession.sets.length) {
+                if (idx < set.exercises.length) {
+                    if (currentSetIdx === currentSession.sets.length - 1 && idx === set.exercises.length - 1 && currentSetCount + 1 === set.repeat) {
+                        endSession();
+                    }
+                    else {
+                        let x = set.exercises[idx];
+                        setCurrentExercise({title: x.title , time: x.time, idx: idx});
+                    }
                 }
                 else {
-                    let x = currentSession.set[idx];
-                    setCurrentExercise({title: x.title , time: x.time, idx: idx});
-                }
-            }
-            else {
-                if (currentSet + 1 < currentSession.sets) {
-                    setIdx(0);
-                    setCurrentSet(setCurrentSet => currentSet + 1);
-                }
-                else {
-                    endSession();    
+                    if (currentSetCount + 1 < set.repeat) {
+                        setIdx(0);
+                        setCurrentSetCount(setCurrentSet => currentSetCount + 1);
+                    }
+                    else {
+                        setIdx(0);
+                        setCurrentSetCount(0);
+                        setCurrentSetIdx(currentSetIdx => currentSetIdx + 1);
+                    }
                 }
             }
         }
@@ -59,16 +79,28 @@ function Board() {
     
     function SetCounter () {
         if (sessionStatus === "ACTIVE") {
-            return (<div>Set {currentSet + 1} / {currentSession.sets}</div>)
+            const set = currentSession.sets[currentSetIdx];
+            return (<div>Set {currentSetCount + 1} / {set.repeat}</div>)
         }
         return null
     }
 
     function WorkoutView () {
-        const rows = currentSession.set.map((x,i) => {
-            const activeClass = idx === i ? "active" : "";
-            return (<tr key={i.toString()} className={activeClass}><td>{x.title}</td><td>{x.time}s</td></tr>)
+
+        let rows = [];
+        console.log(currentSession.sets);
+        currentSession.sets.forEach(function (set, i) {
+            rows.push(<tr key={i.toString() + 't'} className='active'>{set.repeat} SETS</tr>)
+            const r = set.exercises.map((x,j) => {
+                const activeClass = currentSetIdx === i && idx === j ? "active" : "";
+                return (<tr key={i.toString() + j.toString()} className={activeClass}><td>{x.title}</td><td>{x.time}s</td></tr>)
+            });
+
+            rows.push(r);
+            rows.push(<tr key={i.toString + 's'}><td>------------------</td></tr>);
         });
+
+        rows.pop();
 
         return (
             <table>
